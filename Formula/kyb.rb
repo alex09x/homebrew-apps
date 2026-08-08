@@ -9,12 +9,22 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
+    pkgshare.install "skills" if File.exist?("skills")
+  end
+
+  def post_install
+    (var/"kyb").mkpath
+    (var/"log").mkpath
+    if File.exist?(pkgshare/"skills/install.sh")
+      system "bash", pkgshare/"skills/install.sh"
+    end
   end
 
   service do
     run [opt_bin/"kyb"]
     keep_alive true
-    working_dir var
+    environment_variables KYB_DATA: var/"kyb/data", KYB_INDEX: var/"kyb/index", KYB_ADDR: "127.0.0.1:9310"
+    working_dir var/"kyb"
     log_path var/"log/kyb.log"
     error_log_path var/"log/kyb.log"
   end
