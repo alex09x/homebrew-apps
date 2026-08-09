@@ -23,7 +23,12 @@ class Kyb < Formula
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (Pathname.new(Dir.home) / relative_path).mkpath
     end
-    system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "bash", (pkgshare/"skills/install.sh").to_s)
+    installer = (pkgshare/"skills/install.sh").to_s
+    installer_log = (var/"log/kyb-postinstall.log").to_s
+    unless system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "bash", "-c",
+                   "exec bash -x \"$1\" >\"$2\" 2>&1", "kyb-postinstall", installer, installer_log)
+      odie "kyb skill installer failed; see #{installer_log}: #{File.read(installer_log)}"
+    end
   end
 
   service do
