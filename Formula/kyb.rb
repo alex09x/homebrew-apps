@@ -10,12 +10,13 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
-    pkgshare.install "skills"
+    pkgshare.install "skills" if File.exist?("skills")
   end
 
   def post_install
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
+    (var/"log").mkpath
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (Pathname.new(Dir.home) / relative_path).mkpath
     end
@@ -25,7 +26,7 @@ class Kyb < Formula
   service do
     run [opt_bin/"kyb"]
     keep_alive true
-    working_dir var
+    working_dir var/"kyb"
     log_path var/"log/kyb.log"
     error_log_path var/"log/kyb.log"
     environment_variables KYB_DATA: var/"kyb/data", KYB_INDEX: var/"kyb/index", KYB_ADDR: "127.0.0.1:9310"
