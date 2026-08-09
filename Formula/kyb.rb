@@ -9,6 +9,13 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
+    pkgshare.install "skills"
+  end
+
+  def post_install
+    (var/"kyb/data").mkpath
+    (var/"kyb/index").mkpath
+    system({"KYB_INSTALL_BINARY" => opt_bin/"kyb"}, pkgshare/"skills/install.sh")
   end
 
   service do
@@ -17,6 +24,7 @@ class Kyb < Formula
     working_dir var
     log_path var/"log/kyb.log"
     error_log_path var/"log/kyb.log"
+    environment_variables KYB_DATA: var/"kyb/data", KYB_INDEX: var/"kyb/index", KYB_ADDR: "127.0.0.1:9310"
   end
 
   test do
