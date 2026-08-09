@@ -1,8 +1,8 @@
 class Kyb < Formula
   desc "Shared memory and incident tracker for AI agent fleet"
   homepage "https://github.com/alex09x/kyb"
-  url "https://github.com/alex09x/kyb/archive/refs/tags/v0.1.3.tar.gz"
-  sha256 "1664bbee5ed92f0e3e3d5d304c2fda7b1274adb0a0f822312369c2d81ba27065"
+  url "https://github.com/alex09x/kyb/archive/refs/tags/v0.1.4.tar.gz"
+  sha256 "af0a21e76158eab767c9c42016d2028dcf5e9977da6c755a2180c930492f6590"
   license "MIT"
   head "https://github.com/alex09x/kyb.git", branch: "main"
 
