@@ -23,7 +23,7 @@ class Kyb < Formula
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (Pathname.new(Dir.home) / relative_path).mkpath
     end
-    system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "bash", "-x", pkgshare/"skills/install.sh")
+    system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "bash", (pkgshare/"skills/install.sh").to_s)
   end
 
   service do
