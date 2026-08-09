@@ -2,8 +2,9 @@ class Kyb < Formula
   desc "Shared memory and incident tracker for AI agent fleet"
   homepage "https://github.com/alex09x/kyb"
   url "https://github.com/alex09x/kyb/archive/refs/tags/v0.1.2.tar.gz"
-  head "https://github.com/alex09x/kyb.git", branch: "main"
+  sha256 "ebbd59bc3ec79db8f961e9d080ab4a70205ab4249dcd9a5601a1d9a8718373a2"
   license "MIT"
+  head "https://github.com/alex09x/kyb.git", branch: "main"
 
   depends_on "rust" => :build
 
@@ -15,7 +16,10 @@ class Kyb < Formula
   def post_install
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
-    system({"KYB_INSTALL_BINARY" => opt_bin/"kyb"}, pkgshare/"skills/install.sh")
+    [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
+      (Pathname.new(Dir.home) / relative_path).mkpath
+    end
+    system({ "KYB_INSTALL_BINARY" => opt_bin/"kyb" }, pkgshare/"skills/install.sh")
   end
 
   service do

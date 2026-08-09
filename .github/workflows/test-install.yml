@@ -152,29 +152,19 @@ jobs:
 
           check_agent_dir() {
             label="$1"
-            shift
-            for candidate in "$@"; do
-              if [ -d "$candidate" ]; then
-                echo "OK: ${label} skills directory '${candidate}' exists"
-                ls -la "$candidate" || true
-                return 0
-              fi
-            done
-            echo "::error::${label} skills directory missing; checked: $*"
+            candidate="$2"
+            if [ -d "$candidate" ]; then
+              echo "OK: ${label} skills directory '${candidate}' exists"
+              ls -la "$candidate" || true
+              return 0
+            fi
+            echo "::error::${label} skills directory missing: ${candidate}"
             return 1
           }
 
-          check_agent_dir "Claude" \
-            "$HOME/.claude/skills/kyb" \
-            "$HOME/.claude/skills" || failed=1
-
-          check_agent_dir "Codex" \
-            "$HOME/.codex/skills/kyb" \
-            "$HOME/.codex/skills" || failed=1
-
-          check_agent_dir "Gemini" \
-            "$HOME/.gemini/skills/kyb" \
-            "$HOME/.gemini/skills" || failed=1
+          check_agent_dir "Claude" "$HOME/.claude/skills/kyb" || failed=1
+          check_agent_dir "Codex" "$HOME/.codex/skills/kyb" || failed=1
+          check_agent_dir "Gemini" "$HOME/.gemini/config/skills/kyb" || failed=1
 
           if [ "$failed" -ne 0 ]; then
             echo "::error::One or more agent skills directories were not created by the formula post_install"
