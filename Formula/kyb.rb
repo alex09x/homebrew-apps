@@ -10,8 +10,10 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
+    cli_copy = buildpath/"kyb-cli"
+    cp "skills/kyb/bin/kyb", cli_copy
     pkgshare.install "skills" if File.exist?("skills")
-    bin.install "skills/kyb/bin/kyb" => "kyb"
+    bin.install cli_copy => "kyb"
   end
 
   def post_install
