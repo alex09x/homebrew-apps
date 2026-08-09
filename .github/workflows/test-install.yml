@@ -51,7 +51,11 @@ jobs:
         run: |
           set -euxo pipefail
           test -f ./Formula/kyb.rb
-          brew install --formula --verbose ./Formula/kyb.rb
+          brew tap-new --no-git alex09x/apps
+          local_tap="$(brew --repository)/Library/Taps/alex09x/homebrew-apps"
+          mkdir -p "$local_tap/Formula"
+          cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
+          brew install --formula --verbose alex09x/apps/kyb
 
       - name: Show installed formula info
         run: |
