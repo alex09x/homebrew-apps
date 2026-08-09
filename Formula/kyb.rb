@@ -25,8 +25,8 @@ class Kyb < Formula
     end
     installer = (pkgshare/"skills/install.sh").to_s
     installer_log = (var/"log/kyb-postinstall.log").to_s
-    unless system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "bash", "-c",
-                   "exec bash -x \"$1\" >\"$2\" 2>&1", "kyb-postinstall", installer, installer_log)
+    unless Kernel.system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "/bin/bash", installer,
+                         out: installer_log, err: [:child, :out])
       odie "kyb skill installer failed; see #{installer_log}: #{File.read(installer_log)}"
     end
   end
