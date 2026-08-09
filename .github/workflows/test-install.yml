@@ -57,6 +57,18 @@ jobs:
           cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
           brew install --formula --verbose alex09x/apps/kyb
 
+      - name: Show kyb post-install diagnostic on failure
+        if: failure()
+        run: |
+          set +e
+          log_file="$(brew --prefix)/var/log/kyb-postinstall.log"
+          echo "--- ${log_file} ---"
+          if [ -f "$log_file" ]; then
+            cat "$log_file"
+          else
+            echo "no kyb post-install log at ${log_file}"
+          fi
+
       - name: Show installed formula info
         run: |
           set -euxo pipefail
