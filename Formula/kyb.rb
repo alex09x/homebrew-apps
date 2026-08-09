@@ -10,6 +10,7 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
+    bin.install "skills/kyb/bin/kyb" => "kyb"
     pkgshare.install "skills" if File.exist?("skills")
   end
 
@@ -24,7 +25,7 @@ class Kyb < Formula
   end
 
   service do
-    run [opt_bin/"kyb"]
+    run [opt_bin/"kyb-server"]
     keep_alive true
     working_dir var/"kyb"
     log_path var/"log/kyb.log"
