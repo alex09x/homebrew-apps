@@ -93,7 +93,11 @@ jobs:
         run: |
           set -euo pipefail
           brew services list
-          status="$(brew services list | awk '$1 == "kyb" { print $2; exit }')"
+          status="$(brew services list --json | ruby -rjson -e '
+            services = JSON.parse(STDIN.read)
+            service = services.find { |entry| entry["name"] == "kyb" }
+            puts(service ? service.fetch("status", "") : "")
+          ')"
           echo "brew services reports kyb status: '${status:-<missing>}'"
           if [ "${status:-}" != "started" ]; then
             echo "::error::brew services does not report kyb as started (got '${status:-<missing>}')"
