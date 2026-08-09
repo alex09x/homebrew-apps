@@ -10,8 +10,8 @@ class Kyb < Formula
 
   def install
     system "cargo", "install", *std_cargo_args
-    bin.install "skills/kyb/bin/kyb" => "kyb"
     pkgshare.install "skills" if File.exist?("skills")
+    bin.install "skills/kyb/bin/kyb" => "kyb"
   end
 
   def post_install
