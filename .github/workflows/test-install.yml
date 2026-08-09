@@ -1,0 +1,199 @@
+name: test-install
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-install-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HOMEBREW_NO_ANALYTICS: "1"
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+  HOMEBREW_NO_INSTALL_CLEANUP: "1"
+  HOMEBREW_NO_ENV_HINTS: "1"
+  KYB_HEALTH_URL: "http://127.0.0.1:9310/healthz"
+  KYB_HEALTH_RETRIES: "30"
+  KYB_HEALTH_SLEEP_SECONDS: "2"
+
+jobs:
+  install-and-verify:
+    name: Install kyb from checked-out formula and verify
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Show toolchain and Homebrew configuration
+        run: |
+          set -euxo pipefail
+          sw_vers
+          brew --version
+          brew --prefix
+          brew config
+
+      - name: Prepare Homebrew var directories
+        run: |
+          set -euxo pipefail
+          mkdir -p "$(brew --prefix)/var/log"
+
+      # (1) brew install must succeed, which means the cargo build succeeded.
+      - name: Install formula from this checkout (cargo build)
+        run: |
+          set -euxo pipefail
+          test -f ./Formula/kyb.rb
+          brew install --formula --verbose ./Formula/kyb.rb
+
+      - name: Show installed formula info
+        run: |
+          set -euxo pipefail
+          brew list --versions kyb
+          brew info kyb || true
+          command -v kyb
+
+      # (2) The binary must run.
+      - name: Verify kyb --help exits 0
+        run: |
+          set -euo pipefail
+          kyb --help
+          echo "kyb --help exited 0"
+
+      # (3) The launchd service must start and be reported as started.
+      - name: Start kyb service via brew services
+        run: |
+          set -euo pipefail
+          brew services start kyb
+
+      - name: Verify brew services list shows kyb started
+        run: |
+          set -euo pipefail
+          brew services list
+          status="$(brew services list | awk '$1 == "kyb" { print $2; exit }')"
+          echo "brew services reports kyb status: '${status:-<missing>}'"
+          if [ "${status:-}" != "started" ]; then
+            echo "::error::brew services does not report kyb as started (got '${status:-<missing>}')"
+            exit 1
+          fi
+
+      # (4) Health endpoint must answer within a bounded number of retries.
+      - name: Wait for kyb healthz endpoint (bounded retries)
+        run: |
+          set -euo pipefail
+          retries="${KYB_HEALTH_RETRIES}"
+          sleep_seconds="${KYB_HEALTH_SLEEP_SECONDS}"
+          attempt=1
+          while [ "$attempt" -le "$retries" ]; do
+            if curl -sf --max-time 5 "${KYB_HEALTH_URL}"; then
+              echo
+              echo "healthz responded on attempt ${attempt}/${retries}"
+              exit 0
+            fi
+            echo "attempt ${attempt}/${retries}: ${KYB_HEALTH_URL} not ready yet"
+            attempt=$((attempt + 1))
+            sleep "$sleep_seconds"
+          done
+          echo "::error::${KYB_HEALTH_URL} did not respond after ${retries} attempts"
+          exit 1
+
+      # (5) Homebrew var data and index directories must exist and be non-empty.
+      - name: Verify Homebrew var data and index directories are non-empty
+        run: |
+          set -euo pipefail
+          var_prefix="$(brew --prefix)/var"
+          echo "var prefix: ${var_prefix}"
+          ls -la "${var_prefix}" || true
+          ls -laR "${var_prefix}/kyb" || true
+
+          failed=0
+
+          check_non_empty_dir() {
+            label="$1"
+            shift
+            for candidate in "$@"; do
+              if [ -d "$candidate" ]; then
+                if [ -n "$(ls -A "$candidate" 2>/dev/null)" ]; then
+                  echo "OK: ${label} directory '${candidate}' exists and is non-empty"
+                  return 0
+                fi
+                echo "found ${label} directory '${candidate}' but it is empty"
+              fi
+            done
+            echo "::error::${label} directory missing or empty; checked: $*"
+            return 1
+          }
+
+          check_non_empty_dir "kyb data" \
+            "${var_prefix}/kyb/data" \
+            "${var_prefix}/kyb" || failed=1
+
+          check_non_empty_dir "kyb index" \
+            "${var_prefix}/kyb/index" \
+            "${var_prefix}/kyb/data/index" || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::Homebrew var kyb data/index verification failed"
+            exit 1
+          fi
+
+      # (6) Agent skills directories the formula's post_install is supposed to create.
+      - name: Verify agent skills directories exist (Claude, Codex, Gemini)
+        run: |
+          set -euo pipefail
+          failed=0
+
+          check_agent_dir() {
+            label="$1"
+            shift
+            for candidate in "$@"; do
+              if [ -d "$candidate" ]; then
+                echo "OK: ${label} skills directory '${candidate}' exists"
+                ls -la "$candidate" || true
+                return 0
+              fi
+            done
+            echo "::error::${label} skills directory missing; checked: $*"
+            return 1
+          }
+
+          check_agent_dir "Claude" \
+            "$HOME/.claude/skills/kyb" \
+            "$HOME/.claude/skills" || failed=1
+
+          check_agent_dir "Codex" \
+            "$HOME/.codex/skills/kyb" \
+            "$HOME/.codex/skills" || failed=1
+
+          check_agent_dir "Gemini" \
+            "$HOME/.gemini/skills/kyb" \
+            "$HOME/.gemini/skills" || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more agent skills directories were not created by the formula post_install"
+            exit 1
+          fi
+
+      - name: Dump kyb service logs on failure
+        if: failure()
+        run: |
+          set +e
+          brew services list
+          log_file="$(brew --prefix)/var/log/kyb.log"
+          echo "--- ${log_file} ---"
+          tail -n 200 "$log_file" 2>/dev/null || echo "no log file at ${log_file}"
+          echo "--- HOME dotdirs ---"
+          ls -la "$HOME" | grep -E '^d.*\.(claude|codex|gemini)$' || true
+
+      - name: Stop kyb service
+        if: always()
+        run: |
+          set +e
+          brew services stop kyb
