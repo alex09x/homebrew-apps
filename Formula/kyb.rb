@@ -14,28 +14,28 @@ class Kyb < Formula
     cp "skills/kyb/bin/kyb", cli_copy
     pkgshare.install "skills" if File.exist?("skills")
     bin.install cli_copy => "kyb"
+
+    service_wrapper = libexec/"kyb-service"
+    service_wrapper.write <<~SH
+      #!/bin/bash
+      set -euo pipefail
+      for agent_dir in "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.gemini/config/skills"; do
+        /bin/mkdir -p "$agent_dir"
+      done
+      KYB_INSTALL_BINARY="#{opt_bin}/kyb" /bin/bash "#{pkgshare}/skills/install.sh"
+      exec "#{opt_bin}/kyb-server"
+    SH
+    service_wrapper.chmod(0755)
   end
 
-  def post_install
-    (var/"kyb/data").mkpath
-    (var/"kyb/index").mkpath
-    (var/"log").mkpath
-    user_name = [ENV["USER"], ENV["LOGNAME"]].find do |candidate|
-      candidate && !candidate.strip.empty?
-    end
-    home = user_name ? Pathname.new("/Users") / user_name.strip : Pathname.new("/Users/runner")
-
-    (home/".local/bin").mkpath
-    cp opt_bin/"kyb", home/".local/bin/kyb"
-    [".claude/skills/kyb", ".codex/skills/kyb", ".gemini/config/skills/kyb"].each do |relative_path|
-      target = home/relative_path
-      target.mkpath
-      cp pkgshare/"skills/kyb/SKILL.md", target/"SKILL.md"
-    end
+  post_install_steps do
+    mkdir_p "kyb/data", base: :var
+    mkdir_p "kyb/index", base: :var
+    mkdir_p "log", base: :var
   end
 
   service do
-    run [opt_bin/"kyb-server"]
+    run [opt_libexec/"kyb-service"]
     keep_alive true
     working_dir var/"kyb"
     log_path var/"log/kyb.log"
