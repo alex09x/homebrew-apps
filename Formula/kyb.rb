@@ -20,19 +20,17 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
-    user_name = [ENV["USER"], ENV["LOGNAME"], "runner"].find do |candidate|
+    user_name = [ENV["USER"], ENV["LOGNAME"]].find do |candidate|
       candidate && !candidate.strip.empty?
     end
-    home = Pathname.new("/Users") / user_name
-    [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
-      (home / relative_path).mkpath
-    end
-    installer = (pkgshare/"skills/install.sh").to_s
-    installer_log = (var/"log/kyb-postinstall.log").to_s
-    installer_env = { "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s, "HOME" => home.to_s }
-    unless Kernel.system(installer_env, "/bin/bash", installer,
-                         out: installer_log, err: [:child, :out])
-      odie "kyb skill installer failed; see #{installer_log}: #{File.read(installer_log)}"
+    home = user_name ? Pathname.new("/Users") / user_name.strip : Pathname.new("/Users/runner")
+
+    (home/".local/bin").mkpath
+    cp opt_bin/"kyb", home/".local/bin/kyb"
+    [".claude/skills/kyb", ".codex/skills/kyb", ".gemini/config/skills/kyb"].each do |relative_path|
+      target = home/relative_path
+      target.mkpath
+      cp pkgshare/"skills/kyb/SKILL.md", target/"SKILL.md"
     end
   end
 
