@@ -127,6 +127,27 @@ jobs:
           echo "::error::${KYB_HEALTH_URL} did not respond after ${retries} attempts"
           exit 1
 
+      # The service wrapper must reinitialize cleanly when launchd restarts it.
+      - name: Restart kyb service and verify keep-alive (bounded retries)
+        run: |
+          set -euo pipefail
+          brew services restart kyb
+          retries="${KYB_HEALTH_RETRIES}"
+          sleep_seconds="${KYB_HEALTH_SLEEP_SECONDS}"
+          attempt=1
+          while [ "$attempt" -le "$retries" ]; do
+            if curl -sf --max-time 5 "${KYB_HEALTH_URL}"; then
+              echo
+              echo "healthz responded after service restart on attempt ${attempt}/${retries}"
+              exit 0
+            fi
+            echo "restart attempt ${attempt}/${retries}: ${KYB_HEALTH_URL} not ready yet"
+            attempt=$((attempt + 1))
+            sleep "$sleep_seconds"
+          done
+          echo "::error::${KYB_HEALTH_URL} did not recover after service restart"
+          exit 1
+
       # (5) Homebrew var data and index directories must exist and be non-empty.
       - name: Verify Homebrew var data and index directories are non-empty
         run: |
@@ -167,8 +188,8 @@ jobs:
             exit 1
           fi
 
-      # (6) Agent skills directories the formula's post_install is supposed to create.
-      - name: Verify agent skills directories exist (Claude, Codex, Gemini)
+      # (6) The service wrapper populates these after sandbox-safe install steps.
+      - name: Verify agent skills directories after service startup (Claude, Codex, Gemini)
         run: |
           set -euo pipefail
           failed=0
@@ -190,7 +211,7 @@ jobs:
           check_agent_dir "Gemini" "$HOME/.gemini/config/skills/kyb" || failed=1
 
           if [ "$failed" -ne 0 ]; then
-            echo "::error::One or more agent skills directories were not created by the formula post_install"
+            echo "::error::One or more agent skills directories were not created by kyb service initialization"
             exit 1
           fi
 
