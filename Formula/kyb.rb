@@ -20,7 +20,9 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
-    user_name = ENV["USER"] || ENV["LOGNAME"] || "runner"
+    user_name = [ENV["USER"], ENV["LOGNAME"], "runner"].find do |candidate|
+      candidate && !candidate.strip.empty?
+    end
     home = Pathname.new("/Users") / user_name
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (home / relative_path).mkpath
