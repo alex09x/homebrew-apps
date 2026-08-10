@@ -1,3 +1,5 @@
+require "etc"
+
 class Kyb < Formula
   desc "Shared memory and incident tracker for AI agent fleet"
   homepage "https://github.com/alex09x/kyb"
@@ -20,7 +22,7 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
-    home = Pathname.new(Dir.home)
+    home = Pathname.new(Etc.getpwuid(Process.uid).dir)
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (home / relative_path).mkpath
     end
