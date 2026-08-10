@@ -20,7 +20,7 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
-    home = Pathname.new(ENV.fetch("HOME", Dir.home))
+    home = Pathname.new(Dir.home)
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (home / relative_path).mkpath
     end
