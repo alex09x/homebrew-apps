@@ -20,12 +20,14 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
+    home = Pathname.new(ENV.fetch("HOME", Dir.home))
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
-      (Pathname.new(Dir.home) / relative_path).mkpath
+      (home / relative_path).mkpath
     end
     installer = (pkgshare/"skills/install.sh").to_s
     installer_log = (var/"log/kyb-postinstall.log").to_s
-    unless Kernel.system({ "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s }, "/bin/bash", installer,
+    installer_env = { "KYB_INSTALL_BINARY" => (opt_bin/"kyb").to_s, "HOME" => home.to_s }
+    unless Kernel.system(installer_env, "/bin/bash", installer,
                          out: installer_log, err: [:child, :out])
       odie "kyb skill installer failed; see #{installer_log}: #{File.read(installer_log)}"
     end
