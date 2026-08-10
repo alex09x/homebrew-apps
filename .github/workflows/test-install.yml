@@ -57,8 +57,8 @@ jobs:
           cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
           brew install --formula --verbose alex09x/apps/kyb
 
-      - name: Show kyb post-install diagnostic on failure
-        if: failure()
+      - name: Show kyb post-install diagnostic
+        if: always()
         run: |
           set +e
           log_file="$(brew --prefix)/var/log/kyb-postinstall.log"
@@ -68,6 +68,9 @@ jobs:
           else
             echo "no kyb post-install log at ${log_file}"
           fi
+          echo "--- runner home candidates ---"
+          printf 'shell HOME=%s\n' "$HOME"
+          find /Users/runner -maxdepth 5 -path '*/kyb/SKILL.md' -print 2>/dev/null
 
       - name: Show installed formula info
         run: |
