@@ -20,7 +20,8 @@ class Kyb < Formula
     (var/"kyb/data").mkpath
     (var/"kyb/index").mkpath
     (var/"log").mkpath
-    home = Pathname.new("/Users") / ENV.fetch("USER")
+    user_name = ENV["USER"] || ENV["LOGNAME"] || "runner"
+    home = Pathname.new("/Users") / user_name
     [".claude/skills", ".codex/skills", ".gemini/config/skills"].each do |relative_path|
       (home / relative_path).mkpath
     end
