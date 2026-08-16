@@ -57,6 +57,29 @@ jobs:
           set -euxo pipefail
           mkdir -p "$(brew --prefix)/var/log"
 
+      - name: Validate prebuilt formula scan Ruby snippet parses
+        run: |
+          set -euo pipefail
+          cat >/tmp/prebuilt_formula_scan.rb <<'RUBY'
+          path = ARGV.fetch(0)
+          bad_lines = []
+          File.foreach(path).with_index do |raw_line, index|
+            line = raw_line.sub(/#.*/, "")
+            next if line.strip.empty?
+            if line.match?(/^\s*depends_on\s+["'](?:rust|rustup|rustc|cargo)["']/) ||
+               line.match?(/^\s*system\s+.*\bcargo\b/)
+              bad_lines << (index + 1)
+            end
+          end
+          unless bad_lines.empty?
+            $stderr.puts "::error::kyb formula references rust/cargo in executable code; disallowed for prebuilt-only verification"
+            $stderr.puts "offending lines: " + bad_lines.join(", ")
+            exit 1
+          end
+          RUBY
+          ruby -c /tmp/prebuilt_formula_scan.rb
+          rm -f /tmp/prebuilt_formula_scan.rb
+
       # (1) Verify prebuilt Apple Silicon installation path and install kyb from the checked-out formula.
       - name: Install prebuilt Apple Silicon kyb formula from checkout
         run: |
@@ -81,7 +104,7 @@ jobs:
             end
             unless bad_lines.empty?
               $stderr.puts "::error::kyb formula references rust/cargo in executable code; disallowed for prebuilt-only verification"
-              $stderr.puts "offending lines: #{bad_lines.join(\", \")}"
+              $stderr.puts "offending lines: " + bad_lines.join(", ")
               exit 1
             end
           ' "$local_tap/Formula/kyb.rb"
