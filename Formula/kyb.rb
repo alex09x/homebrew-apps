@@ -1,19 +1,41 @@
+# Source of truth for Formula/kyb.rb in the alex09x/homebrew-apps tap.
+#
+# ARTIFACT CONTRACT
+#   This formula installs the prebuilt release asset produced by
+#   scripts/package-macos-arm64.sh — it never builds from source, so it declares
+#   no "rust" dependency and never invokes cargo. The archive holds a single
+#   top-level directory with bin/kyb, bin/kyb-server, the complete skills/ tree
+#   (including skills/install.sh), LICENSE, README.md and MANIFEST.txt; the
+#   install block below depends on exactly those paths.
+#
+#   One supported platform: aarch64-apple-darwin. Intel macOS is unsupported.
+#
+# RENDERING
+#   .github/workflows/update-homebrew.yml substitutes the KYB_URL, KYB_SHA256 and
+#   KYB_VERSION placeholders below (each written between doubled at-signs) with
+#   the exact release asset URL, its SHA-256 and the tag without its leading "v".
+#   It then checks that no placeholder survived and that `ruby -c` accepts the
+#   result. Edit this template, never the rendered formula in the tap.
 class Kyb < Formula
   desc "Shared memory and incident tracker for AI agent fleet"
   homepage "https://github.com/alex09x/kyb"
-  url "https://github.com/alex09x/kyb/archive/refs/tags/v0.1.4.tar.gz"
-  sha256 "af0a21e76158eab767c9c42016d2028dcf5e9977da6c755a2180c930492f6590"
+  url "https://github.com/alex09x/kyb/releases/download/v0.2.0/kyb-v0.2.0-aarch64-apple-darwin.tar.gz"
+  sha256 "d212008a65982e9fba8719a21d2802fa5b9679f3fb21a80c9236c3c53e6983ba"
+  version "0.2.0"
   license "MIT"
-  head "https://github.com/alex09x/kyb.git", branch: "main"
 
-  depends_on "rust" => :build
+  # Apple Silicon only, by design: the release ships one aarch64-apple-darwin
+  # asset and there is no source build path to fall back to on Intel.
+  depends_on arch: :arm64
+  depends_on :macos
 
   def install
-    system "cargo", "install", *std_cargo_args
-    cli_copy = buildpath/"kyb-cli"
-    cp "skills/kyb/bin/kyb", cli_copy
-    pkgshare.install "skills" if File.exist?("skills")
-    bin.install cli_copy => "kyb"
+    bin.install "bin/kyb-server"
+    bin.install "bin/kyb"
+    pkgshare.install "skills"
+    pkgshare.install "MANIFEST.txt"
+    doc.install "README.md"
+    prefix.install "LICENSE"
 
     service_wrapper = libexec/"kyb-service"
     service_wrapper.write <<~SH
