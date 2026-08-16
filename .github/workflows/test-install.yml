@@ -41,13 +41,24 @@ jobs:
           brew --prefix
           brew config
 
+      - name: Assert Apple Silicon runner
+        run: |
+          set -euo pipefail
+          platform="$(uname -s)"
+          arch="$(uname -m)"
+          echo "runner platform: ${platform} ${arch}"
+          if [ "$platform" != "Darwin" ] || [ "$arch" != "arm64" ]; then
+            echo "::error::This workflow requires Apple Silicon macOS (Darwin arm64) runner"
+            exit 1
+          fi
+
       - name: Prepare Homebrew var directories
         run: |
           set -euxo pipefail
           mkdir -p "$(brew --prefix)/var/log"
 
-      # (1) brew install must succeed, which means the cargo build succeeded.
-      - name: Install formula from this checkout (cargo build)
+      # (1) Verify prebuilt Apple Silicon installation path and install kyb from the checked-out formula.
+      - name: Install prebuilt Apple Silicon kyb formula from checkout
         run: |
           set -euxo pipefail
           test -f ./Formula/kyb.rb
@@ -55,6 +66,18 @@ jobs:
           local_tap="$(brew --repository)/Library/Taps/alex09x/homebrew-apps"
           mkdir -p "$local_tap/Formula"
           cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
+          echo "Inspecting formula for rust/cargo usage"
+          if grep -Eiq 'depends_on[[:space:]]+["'"'"'](rust|rustup|rustc|cargo)["'"'"']' "$local_tap/Formula/kyb.rb" \
+             || grep -Eq '\\bcargo\\b' "$local_tap/Formula/kyb.rb"; then
+            echo "::error::kyb formula references rust/cargo which is incompatible with the prebuilt-only assertion"
+            exit 1
+          fi
+          echo "Inspecting dependency graph from Homebrew for rust"
+          brew deps --full-name alex09x/apps/kyb | tee /tmp/kyb-deps.txt
+          if grep -Eq '^rust(@|$)' /tmp/kyb-deps.txt; then
+            echo "::error::Homebrew dependency output for kyb includes rust"
+            exit 1
+          fi
           brew install --formula --verbose alex09x/apps/kyb
 
       - name: Show kyb post-install diagnostic
@@ -70,7 +93,7 @@ jobs:
           fi
           echo "--- runner home candidates ---"
           printf 'shell HOME=%s\n' "$HOME"
-          find /Users/runner -maxdepth 5 -path '*/kyb/SKILL.md' -print 2>/dev/null
+          find "$HOME" -maxdepth 5 -path '*/kyb/SKILL.md' -print 2>/dev/null
 
       - name: Show installed formula info
         run: |
@@ -153,40 +176,31 @@ jobs:
         run: |
           set -euo pipefail
           var_prefix="$(brew --prefix)/var"
+          data_dir="${var_prefix}/kyb/data"
+          index_dir="${var_prefix}/kyb/index"
           echo "var prefix: ${var_prefix}"
           ls -la "${var_prefix}" || true
           ls -laR "${var_prefix}/kyb" || true
 
-          failed=0
-
-          check_non_empty_dir() {
-            label="$1"
-            shift
-            for candidate in "$@"; do
-              if [ -d "$candidate" ]; then
-                if [ -n "$(ls -A "$candidate" 2>/dev/null)" ]; then
-                  echo "OK: ${label} directory '${candidate}' exists and is non-empty"
-                  return 0
-                fi
-                echo "found ${label} directory '${candidate}' but it is empty"
-              fi
-            done
-            echo "::error::${label} directory missing or empty; checked: $*"
-            return 1
-          }
-
-          check_non_empty_dir "kyb data" \
-            "${var_prefix}/kyb/data" \
-            "${var_prefix}/kyb" || failed=1
-
-          check_non_empty_dir "kyb index" \
-            "${var_prefix}/kyb/index" \
-            "${var_prefix}/kyb/data/index" || failed=1
-
-          if [ "$failed" -ne 0 ]; then
-            echo "::error::Homebrew var kyb data/index verification failed"
+          if [ ! -d "${data_dir}" ]; then
+            echo "::error::kyb data directory missing: ${data_dir}"
             exit 1
           fi
+          if [ -z "$(ls -A "${data_dir}")" ]; then
+            echo "::error::kyb data directory is empty: ${data_dir}"
+            exit 1
+          fi
+          echo "OK: data directory exists and is non-empty: ${data_dir}"
+
+          if [ ! -d "${index_dir}" ]; then
+            echo "::error::kyb index directory missing: ${index_dir}"
+            exit 1
+          fi
+          if [ -z "$(ls -A "${index_dir}")" ]; then
+            echo "::error::kyb index directory is empty: ${index_dir}"
+            exit 1
+          fi
+          echo "OK: index directory exists and is non-empty: ${index_dir}"
 
       # (6) The service wrapper populates these after sandbox-safe install steps.
       - name: Verify agent skills directories after service startup (Claude, Codex, Gemini)
