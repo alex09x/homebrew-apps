@@ -68,13 +68,12 @@ jobs:
           cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
           echo "Inspecting formula for rust/cargo usage"
           if grep -Eiq 'depends_on[[:space:]]+["'"'"'](rust|rustup|rustc|cargo)["'"'"']' "$local_tap/Formula/kyb.rb" \
-             || grep -Eq '\\bcargo\\b' "$local_tap/Formula/kyb.rb"; then
+             || grep -Eq '(^|[^[:alnum:]_])cargo([^[:alnum:]_]|$)' "$local_tap/Formula/kyb.rb"; then
             echo "::error::kyb formula references rust/cargo which is incompatible with the prebuilt-only assertion"
             exit 1
           fi
           echo "Inspecting dependency graph from Homebrew for rust"
-          brew deps --full-name alex09x/apps/kyb | tee /tmp/kyb-deps.txt
-          if grep -Eq '^rust(@|$)' /tmp/kyb-deps.txt; then
+          if brew deps --include-build --full-name alex09x/apps/kyb | grep -Eq '^rust(@|$)'; then
             echo "::error::Homebrew dependency output for kyb includes rust"
             exit 1
           fi
