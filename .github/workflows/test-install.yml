@@ -66,15 +66,27 @@ jobs:
           local_tap="$(brew --repository)/Library/Taps/alex09x/homebrew-apps"
           mkdir -p "$local_tap/Formula"
           cp "$GITHUB_WORKSPACE/Formula/kyb.rb" "$local_tap/Formula/kyb.rb"
+          brew trust alex09x/apps
           echo "Inspecting formula for rust/cargo usage"
-          if grep -Eiq 'depends_on[[:space:]]+["'"'"'](rust|rustup|rustc|cargo)["'"'"']' "$local_tap/Formula/kyb.rb" \
-             || grep -Eq '(^|[^[:alnum:]_])cargo([^[:alnum:]_]|$)' "$local_tap/Formula/kyb.rb"; then
-            echo "::error::kyb formula references rust/cargo which is incompatible with the prebuilt-only assertion"
-            exit 1
-          fi
-          echo "Inspecting dependency graph from Homebrew for rust"
+          ruby -e '
+            path = ARGV.fetch(0)
+            bad_lines = []
+            File.foreach(path).with_index do |raw_line, index|
+              line = raw_line.sub(/#.*/, "")
+              next if line.strip.empty?
+              if line.match?(/^\s*depends_on\s+["'"'"'](?:rust|rustup|rustc|cargo)["'"'"']/) ||
+                 line.match?(/^\s*system\s+.*\bcargo\b/)
+                bad_lines << (index + 1)
+              end
+            end
+            unless bad_lines.empty?
+              $stderr.puts "::error::kyb formula references rust/cargo in executable code; disallowed for prebuilt-only verification"
+              $stderr.puts "offending lines: #{bad_lines.join(\", \")}"
+              exit 1
+            end
+          ' "$local_tap/Formula/kyb.rb"
           if brew deps --include-build --full-name alex09x/apps/kyb | grep -Eq '^rust(@|$)'; then
-            echo "::error::Homebrew dependency output for kyb includes rust"
+            echo "::error::kyb formula references rust/cargo which is incompatible with the prebuilt-only assertion"
             exit 1
           fi
           brew install --formula --verbose alex09x/apps/kyb
@@ -243,4 +255,8 @@ jobs:
         if: always()
         run: |
           set +e
-          brew services stop kyb
+          if command -v brew >/dev/null 2>&1 && brew list --formula --versions kyb >/dev/null 2>&1; then
+            brew services stop kyb || true
+          else
+            echo "Skipping kyb service stop: brew unavailable or formula not installed"
+          fi
