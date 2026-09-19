@@ -19,9 +19,9 @@
 class Kyb < Formula
   desc "Shared memory and incident tracker for AI agent fleet"
   homepage "https://github.com/alex09x/kyb"
-  url "https://github.com/alex09x/kyb/releases/download/v0.2.1/kyb-v0.2.1-aarch64-apple-darwin.tar.gz"
-  sha256 "8631f6536af04aa02d6de7e0c78b00aa026630b02f6123590925246bf3af3fe2"
-  version "0.2.1"
+  url "https://github.com/alex09x/kyb/releases/download/v0.2.2/kyb-v0.2.2-aarch64-apple-darwin.tar.gz"
+  sha256 "1aff3efead497715c4eae4e0655119e2e43f9c746ab064883dff05ffeeac4e09"
+  version "0.2.2"
   license "MIT"
 
   # Apple Silicon only, by design: the release ships one aarch64-apple-darwin
