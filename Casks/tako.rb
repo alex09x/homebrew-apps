@@ -1,6 +1,6 @@
 cask "tako" do
-  version "0.1.3"
-  sha256 "3cca836e8fe2a1a99abdf006428deb5ba1009139bc335152e03743b33362a4df"
+  version "0.1.4"
+  sha256 "1637b16f67e3275ef4418ae8721a39abba281329d072890e0831ef0c472fa582"
 
   url "https://github.com/alex09x/tako/releases/download/v#{version}/Tako-#{version}.dmg"
   name "Tako"
