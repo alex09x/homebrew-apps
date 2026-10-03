@@ -1,6 +1,6 @@
 cask "tako" do
-  version "0.1.4"
-  sha256 "1637b16f67e3275ef4418ae8721a39abba281329d072890e0831ef0c472fa582"
+  version "0.1.6"
+  sha256 "2914a78fd90b0df32b2dd76043d160bd208c6ca91ab3fd6c822cd0fcfc3abfb9"
 
   url "https://github.com/alex09x/tako/releases/download/v#{version}/Tako-#{version}.dmg"
   name "Tako"
@@ -17,6 +17,7 @@ cask "tako" do
 
   app "Tako.app"
   binary "#{appdir}/Tako.app/Contents/MacOS/Tako", target: "tako"
+  binary "#{appdir}/Tako.app/Contents/MacOS/takoctl", target: "takoctl"
 
   zap trash: [
     "~/.config/tako",
