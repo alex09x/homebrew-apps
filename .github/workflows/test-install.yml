@@ -120,6 +120,21 @@ jobs:
           kyb --help
           echo "kyb --help exited 0"
 
+      - name: Install prebuilt xref formula from checkout and verify
+        run: |
+          set -euxo pipefail
+          test -f ./Formula/xref.rb
+          local_tap="$(brew --repository)/Library/Taps/alex09x/homebrew-apps"
+          cp "$GITHUB_WORKSPACE/Formula/xref.rb" "$local_tap/Formula/xref.rb"
+          if brew deps --include-build --full-name alex09x/apps/xref | grep -Eq '^rust(@|$)'; then
+            echo "::error::xref formula references rust/cargo which is incompatible with prebuilt-only install"
+            exit 1
+          fi
+          brew install --formula --verbose alex09x/apps/xref
+          command -v xref
+          xref --version
+          brew test alex09x/apps/xref
+
       # (3) The launchd service must start and be reported as started.
       - name: Start kyb service via brew services
         run: |
