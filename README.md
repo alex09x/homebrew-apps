@@ -7,6 +7,7 @@ Homebrew tap for personal tools and services.
 ```bash
 brew tap alex09x/apps
 brew install kyb
+brew install xref
 ```
 
 ## Running as a background service
