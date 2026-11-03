@@ -1,5 +1,5 @@
 # Source of truth for Formula/xref.rb in the alex09x/homebrew-apps tap.
-# XRef Code — Ultra blazing fast binary analysis
+# XRef — Ultra blazing fast binary analysis
 # Copyright (c) 2026 Alexander Panasenko
 # Contact: alex@prod.codes
 # Author: https://prod.codes/about/
@@ -10,21 +10,21 @@
 # prebuilt macOS Apple Silicon and Linux x86_64 release archives. Never builds
 # from source, declares no Rust dependency, and never invokes cargo.
 class Xref < Formula
-  desc "Ultra blazing fast x86-64 ELF/Mach-O analysis and pseudo-C"
+  desc "Ultra blazing fast x86-64 ELF/Mach-O analysis, pseudo-C and live inspection"
   homepage "https://xrefcode.com"
-  version "0.2.0"
+  version "0.3.0"
   license any_of: ["MIT", "Apache-2.0"]
 
   on_macos do
     depends_on arch: :arm64
-    url "https://github.com/alex09x/xref/releases/download/v0.2.0/xref-v0.2.0-aarch64-apple-darwin.tar.gz"
-    sha256 "d90727a8a77a75f44cbb3febac23b2a2c7fb313422ba6808be03446545150e40"
+    url "https://github.com/alex09x/xref/releases/download/v0.3.0/xref-v0.3.0-aarch64-apple-darwin.tar.gz"
+    sha256 "db7424d9d145a5e28426f4b28d1c55740bfa4a439e4bbf82ae25245892e641b5"
   end
 
   on_linux do
     depends_on arch: :x86_64
-    url "https://github.com/alex09x/xref/releases/download/v0.2.0/xref-v0.2.0-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "d8b70fac72e38c691504ab23db8829c41d2a89c210d6c67532efed96d2038f57"
+    url "https://github.com/alex09x/xref/releases/download/v0.3.0/xref-v0.3.0-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "9ecb7582f9a249b51deedfc01670daa1f3c62280428a2dc62787b9a05b75d5e3"
   end
 
   def install
