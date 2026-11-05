@@ -6,7 +6,7 @@
 # Project: https://github.com/alex09x/xref
 # SPDX-License-Identifier: MIT OR Apache-2.0
 #
-# Rendered by .github/workflows/update-homebrew.yml against the published
+# Rendered and pushed to the tap by .github/workflows/update-homebrew.yml from the published
 # prebuilt macOS Apple Silicon and Linux x86_64 release archives. Never builds
 # from source, declares no Rust dependency, and never invokes cargo.
 class Xref < Formula
@@ -37,4 +37,3 @@ class Xref < Formula
     assert_match "xref #{version}", shell_output("#{bin}/xref --version")
   end
 end
-
