@@ -12,19 +12,19 @@
 class Xref < Formula
   desc "Ultra blazing fast x86-64 ELF/Mach-O analysis, pseudo-C and live inspection"
   homepage "https://xrefcode.com"
-  version "0.3.0"
+  version "0.4.0"
   license any_of: ["MIT", "Apache-2.0"]
 
   on_macos do
     depends_on arch: :arm64
-    url "https://github.com/alex09x/xref/releases/download/v0.3.0/xref-v0.3.0-aarch64-apple-darwin.tar.gz"
-    sha256 "db7424d9d145a5e28426f4b28d1c55740bfa4a439e4bbf82ae25245892e641b5"
+    url "https://github.com/alex09x/xref/releases/download/v0.4.0/xref-v0.4.0-aarch64-apple-darwin.tar.gz"
+    sha256 "bc19a151968badaff0f0774178dada072033a05bc8591e54b225538952d6e6a6"
   end
 
   on_linux do
     depends_on arch: :x86_64
-    url "https://github.com/alex09x/xref/releases/download/v0.3.0/xref-v0.3.0-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "9ecb7582f9a249b51deedfc01670daa1f3c62280428a2dc62787b9a05b75d5e3"
+    url "https://github.com/alex09x/xref/releases/download/v0.4.0/xref-v0.4.0-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "15a32d4bbe59307709c058e6c6379d98814fcafe106d8edc0379165454edf0a2"
   end
 
   def install
@@ -37,3 +37,4 @@ class Xref < Formula
     assert_match "xref #{version}", shell_output("#{bin}/xref --version")
   end
 end
+
