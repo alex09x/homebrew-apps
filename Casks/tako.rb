@@ -25,4 +25,10 @@ cask "tako" do
     "~/Library/Preferences/com.tako-core.terminal.plist",
     "~/Library/Saved Application State/com.tako-core.terminal.savedState",
   ]
+
+  caveats <<~EOS
+    Open Tako.app once and click Open if macOS asks for confirmation.
+    Wait for a Tako window before running takoctl. Until you approve the
+    first launch, takoctl can wait silently.
+  EOS
 end
