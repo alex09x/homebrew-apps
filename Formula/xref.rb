@@ -12,19 +12,19 @@
 class Xref < Formula
   desc "Ultra blazing fast x86-64 ELF/Mach-O analysis, pseudo-C and live inspection"
   homepage "https://xrefcode.com"
-  version "0.6.0"
+  version "0.7.0"
   license any_of: ["MIT", "Apache-2.0"]
 
   on_macos do
     depends_on arch: :arm64
-    url "https://github.com/alex09x/xref/releases/download/v0.6.0/xref-v0.6.0-aarch64-apple-darwin.tar.gz"
-    sha256 "67749ee4ed7e6f41da56c79b9017bb86a69b216507a7d5cfc906701892e205d3"
+    url "https://github.com/alex09x/xref/releases/download/v0.7.0/xref-v0.7.0-aarch64-apple-darwin.tar.gz"
+    sha256 "e5d173f2d53259f0f06d4d76ef78cc93f5ced927d8d7b7ff687d06960cab94c9"
   end
 
   on_linux do
     depends_on arch: :x86_64
-    url "https://github.com/alex09x/xref/releases/download/v0.6.0/xref-v0.6.0-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "b35c29354b00421f729ee368356b1df1b5a20b99fdfb003a2ceac560cb9dfa45"
+    url "https://github.com/alex09x/xref/releases/download/v0.7.0/xref-v0.7.0-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "43f75d04076203bb5990727509d1c14afca0ee5531e6e801d0ab373707d47de8"
   end
 
   def install
